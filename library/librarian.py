@@ -1,7 +1,19 @@
-def add_book(library: dict, title: str, author: str, isbn: str):
-    """إضافة كتاب جديد إلى المكتبة"""
+import json
+import os
+
+def save_library(library, filename="library_data.json"):
+    with open(filename, "w") as f:
+        json.dump(library, f, indent=4)
+
+def load_library(filename="library_data.json"):
+    if os.path.exists(filename):
+        with open(filename, "r") as f:
+            return json.load(f)
+    return {}
+
+def add_book(library, title, author, isbn):
     if isbn in library:
-        print(f"Book with ISBN {isbn} already exists!")
+        print("Book already exists!")
         return False
     library[isbn] = {
         "title": title,
@@ -9,47 +21,52 @@ def add_book(library: dict, title: str, author: str, isbn: str):
         "isbn": isbn,
         "available": True
     }
+    save_library(library)
+    print(f"Book '{title}' added successfully!")
     return True
 
-
-def remove_book(library: dict, isbn: str):
-    """حذف كتاب من المكتبة"""
+def remove_book(library, isbn):
     if isbn in library:
         del library[isbn]
-        print(f"Book with ISBN {isbn} removed successfully!")
+        save_library(library)
+        print(f"Book with ISBN {isbn} removed.")
         return True
-    else:
-        print(f"Book with ISBN {isbn} not found.")
-        return False
+    print("Book not found.")
+    return False
 
-
-def check_out_book(library: dict, isbn: str):
-    """استعارة كتاب (تغيير الحالة إلى غير متاح)"""
+def check_out_book(library, isbn):
     if isbn in library:
         if library[isbn]["available"]:
             library[isbn]["available"] = False
-            print(f"Book '{library[isbn]['title']}' checked out successfully!")
+            save_library(library)
+            print("Checked out successfully.")
         else:
-            print(f"Book '{library[isbn]['title']}' is already checked out.")
+            print("Book is already checked out.")
     else:
-        print(f"Book with ISBN {isbn} not found.")
+        print("Book not found.")
 
-
-def return_book(library: dict, isbn: str):
-    """إرجاع كتاب (تغيير الحالة إلى متاح)"""
+def return_book(library, isbn):
     if isbn in library:
         library[isbn]["available"] = True
-        print(f"Book '{library[isbn]['title']}' returned successfully!")
+        save_library(library)
+        print("Returned successfully.")
     else:
-        print(f"Book with ISBN {isbn} not found.")
+        print("Book not found.")
 
-
-def display_books(library: dict):
-    """عرض كل الكتب الموجودة في المكتبة"""
+def display_books(library):
     if not library:
-        print("No books in the library.")
+        print("Library is empty.")
         return
-
     for book in library.values():
         status = "Available" if book["available"] else "Checked Out"
         print(f"{book['title']} by {book['author']} (ISBN: {book['isbn']}) - {status}")
+
+def search_books(library, keyword):
+    found = False
+    for book in library.values():
+        if keyword.lower() in book['title'].lower() or keyword.lower() in book['author'].lower():
+            status = "Available" if book["available"] else "Checked Out"
+            print(f"Found: {book['title']} by {book['author']} - {status}")
+            found = True
+    if not found:
+        print("No matches found.")
